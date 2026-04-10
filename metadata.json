@@ -1,0 +1,7 @@
+{
+  "name": "SafeScan",
+  "description": "An intelligent engine that scans receipt items against official health recall databases using AI fuzzy matching to protect your health.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
