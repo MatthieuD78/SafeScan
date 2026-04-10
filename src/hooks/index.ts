@@ -4,3 +4,7 @@ export { useSettings } from './useSettings';
 export { useRecallsSearch } from './useRecallsSearch';
 export { useConnectedServices } from './useConnectedServices';
 export { useRecipeModal } from './useRecipeModal';
+export { useOcr } from './useOcr';
+export { useNutrition } from './useNutrition';
+export { useReminders } from './useReminders';
+export { useRappelConso } from './useRappelConso';

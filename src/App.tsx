@@ -7,7 +7,8 @@ import {
   useSettings,
   useRecallsSearch,
   useConnectedServices,
-  useRecipeModal
+  useRecipeModal,
+  useRappelConso
 } from './hooks';
 
 // Constants
@@ -18,6 +19,7 @@ import { Header } from './components/layout/Header';
 import { BottomNav } from './components/layout/BottomNav';
 import { RecipeModal } from './components/features/results/RecipeModal';
 import { SettingsModal } from './components/features/settings/SettingsModal';
+import { RealTimeRecallBanner } from './components/features/alerts/RealTimeRecallBanner';
 
 // Views
 import { ScanView } from './views/ScanView';
@@ -49,6 +51,17 @@ const App: React.FC = () => {
   // Recipe Modal
   const { selectedRecipe, openRecipe, closeRecipe } = useRecipeModal();
 
+  // RappelConso temps réel
+  const {
+    activeAlerts,
+    checkProducts,
+    dismissAlert,
+    refreshRecalls,
+    lastUpdated,
+    isLoading: isRecallsLoading,
+    criticalAlertsCount
+  } = useRappelConso();
+
   // Bilan Details
   const [showBilanDetails, setShowBilanDetails] = React.useState(false);
 
@@ -56,12 +69,22 @@ const App: React.FC = () => {
   const handleNfcScan = async () => {
     const scannedText = await simulateNfcPayment();
     await analyze(scannedText, OFFICIAL_RECALLS, settings);
+    
+    // Vérifie les produits scannés contre RappelConso
+    const products = scannedText.split('\n').map(line => ({ name: line.trim() }));
+    await checkProducts(products);
+    
     setShowBilanDetails(false);
   };
 
   // Handle Manual Analyze
-  const handleManualAnalyze = () => {
+  const handleManualAnalyze = async () => {
     analyze(receiptText, OFFICIAL_RECALLS, settings);
+    
+    // Vérifie les produits scannés contre RappelConso
+    const products = receiptText.split('\n').map(line => ({ name: line.trim() }));
+    await checkProducts(products);
+    
     setShowBilanDetails(false);
   };
 
@@ -83,18 +106,29 @@ const App: React.FC = () => {
     switch (activeTab) {
       case 'scan':
         return (
-          <ScanView
-            receiptText={receiptText}
-            onReceiptChange={handleReceiptChange}
-            isNfcScanning={isScanning}
-            onNfcScan={handleNfcScan}
-            isAnalyzing={isAnalyzing}
-            onAnalyze={handleManualAnalyze}
-            result={result}
-            showBilanDetails={showBilanDetails}
-            onToggleBilan={() => setShowBilanDetails(!showBilanDetails)}
-            onRecipeClick={openRecipe}
-          />
+          <div className="space-y-4">
+            {/* Alerte RappelConso temps réel */}
+            <RealTimeRecallBanner
+              alerts={activeAlerts}
+              onDismiss={dismissAlert}
+              onRefresh={refreshRecalls}
+              lastUpdated={lastUpdated}
+              isLoading={isRecallsLoading}
+            />
+            
+            <ScanView
+              receiptText={receiptText}
+              onReceiptChange={handleReceiptChange}
+              isNfcScanning={isScanning}
+              onNfcScan={handleNfcScan}
+              isAnalyzing={isAnalyzing}
+              onAnalyze={handleManualAnalyze}
+              result={result}
+              showBilanDetails={showBilanDetails}
+              onToggleBilan={() => setShowBilanDetails(!showBilanDetails)}
+              onRecipeClick={openRecipe}
+            />
+          </div>
         );
       case 'alerts':
         return (
